@@ -12,7 +12,7 @@ import {
   IWireMockResponse,
   WireMock,
 } from 'wiremock-captain';
-import { flight1, flight2 } from '../src/test-helper/flight.mock';
+import { flight1, flight2, flight3 } from '../src/test-helper/flight.mock';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -46,7 +46,7 @@ describe('AppController (e2e)', () => {
 
     const response1: IWireMockResponse = {
       status: 200,
-      body: { flights: [flight1] },
+      body: { flights: [flight1, flight3] },
     };
 
     const response2: IWireMockResponse = {
@@ -61,7 +61,7 @@ describe('AppController (e2e)', () => {
       .get('/')
       .timeout(1000)
       .expect(200)
-      .expect({ flights: [flight1, flight2] });
+      .expect({ flights: [flight1, flight3, flight2] });
   });
 
   it('One url times out but it returns in less than a second', async () => {
@@ -90,7 +90,12 @@ describe('AppController (e2e)', () => {
         constantDelay: 1500,
       },
     });
-    await powerUsMock.register(request2, response2);
+    await powerUsMock.register(request2, response2, {
+      responseDelay: {
+        type: DelayType.FIXED,
+        constantDelay: 700,
+      },
+    });
 
     return request(app.getHttpServer())
       .get('/')
