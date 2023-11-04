@@ -13,6 +13,7 @@ import {
   WireMock,
 } from 'wiremock-captain';
 import { flight1, flight2, flight3 } from '../src/test-helper/flight.mock';
+import { Flight } from '../src/model/flight.model';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -62,6 +63,42 @@ describe('AppController (e2e)', () => {
       .timeout(1000)
       .expect(200)
       .expect({ flights: [flight1, flight3, flight2] });
+  });
+
+  it('Gets flights from both urls with big response', async () => {
+    const request1: IWireMockRequest = {
+      method: 'GET',
+      endpoint: '/flights1',
+    };
+    const request2: IWireMockRequest = {
+      method: 'GET',
+      endpoint: '/flights2',
+    };
+
+    const flightsUrl1: Flight[] = [];
+
+    for (let i = 0; i < 1000; i++) {
+      flightsUrl1.push(flight1, flight2, flight3);
+    }
+
+    const response1: IWireMockResponse = {
+      status: 200,
+      body: { flights: flightsUrl1 },
+    };
+
+    const response2: IWireMockResponse = {
+      status: 200,
+      body: { flights: [flight1, flight2] },
+    };
+
+    await powerUsMock.register(request1, response1);
+    await powerUsMock.register(request2, response2);
+
+    return request(app.getHttpServer())
+      .get('/')
+      .timeout(1000)
+      .expect(200)
+      .expect({ flights: [flight1, flight2, flight3] });
   });
 
   it('One url times out but it returns in less than a second', async () => {
