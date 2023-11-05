@@ -1,18 +1,35 @@
 import { ConfigService } from '@nestjs/config';
 import { FlightService } from './flight.service';
-import { CacheClientFactory } from '../storage/cache.client.factory';
+import { CacheClientFactory } from '../../storage/cache.client.factory';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { CacheClientInterface } from '../storage/cache.client.interface';
+import { CacheClientInterface } from '../../storage/cache.client.interface';
 import { UrlFlightProvider } from '../provider/url-flight.provider';
 import { when } from 'jest-when';
 import { flight1, flight2, flight3 } from '../test-helper/flight.mock';
+import { ProviderType } from '../model/provider-config.model';
 
-jest.mock('../storage/cache.client.interface');
-jest.mock('../provider/url.flights.provider');
+jest.mock('../../storage/cache.client.interface');
+jest.mock('../provider/url-flight.provider');
 
 describe('FlightService', () => {
   let configService: DeepMocked<ConfigService>;
   let cacheClientFactory: DeepMocked<CacheClientFactory>;
+
+  const urlProviderConfig = {
+    url: '',
+    timeout: 1,
+    cacheTime: 1,
+    cacheKey: 1,
+    type: ProviderType.URL,
+  };
+
+  const dbProviderConfig = {
+    db: '',
+    timeout: 1,
+    cacheTime: 1,
+    cacheKey: 1,
+    type: 'DB',
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -21,16 +38,9 @@ describe('FlightService', () => {
   });
 
   test('Different results from providers', async () => {
-    const urlProvider1 = {
-      url: '',
-      timeout: 1,
-      cacheTime: 1,
-      cacheKey: 1,
-    };
+    const providerConfigs = [urlProviderConfig, urlProviderConfig];
+    configService.get.mockReturnValueOnce(providerConfigs);
 
-    configService.get
-      .mockReturnValueOnce(urlProvider1)
-      .mockReturnValueOnce(urlProvider1);
     cacheClientFactory.getClient.mockReturnValueOnce(
       createMock<CacheClientInterface>(),
     );
@@ -46,16 +56,9 @@ describe('FlightService', () => {
   });
 
   test('Merge different results from providers', async () => {
-    const urlProvider1 = {
-      url: '',
-      timeout: 1,
-      cacheTime: 1,
-      cacheKey: 1,
-    };
+    const providerConfigs = [urlProviderConfig, urlProviderConfig];
+    configService.get.mockReturnValueOnce(providerConfigs);
 
-    configService.get
-      .mockReturnValueOnce(urlProvider1)
-      .mockReturnValueOnce(urlProvider1);
     cacheClientFactory.getClient.mockReturnValueOnce(
       createMock<CacheClientInterface>(),
     );
@@ -71,16 +74,9 @@ describe('FlightService', () => {
   });
 
   test('No results from flights', async () => {
-    const urlProvider1 = {
-      url: '',
-      timeout: 1,
-      cacheTime: 1,
-      cacheKey: 1,
-    };
+    const providerConfigs = [urlProviderConfig];
+    configService.get.mockReturnValueOnce(providerConfigs);
 
-    configService.get
-      .mockReturnValueOnce(urlProvider1)
-      .mockReturnValueOnce(undefined);
     cacheClientFactory.getClient.mockReturnValueOnce(
       createMock<CacheClientInterface>(),
     );
@@ -90,6 +86,21 @@ describe('FlightService', () => {
     const flights = await flightService.getFlights();
 
     expect(UrlFlightProvider.prototype.getFlights).toHaveBeenCalledTimes(1);
+    expect(flights).toEqual([]);
+  });
+
+  test('No valid providers', async () => {
+    const providerConfigs = [dbProviderConfig];
+    configService.get.mockReturnValueOnce(providerConfigs);
+
+    cacheClientFactory.getClient.mockReturnValueOnce(
+      createMock<CacheClientInterface>(),
+    );
+
+    const flightService = new FlightService(configService, cacheClientFactory);
+    const flights = await flightService.getFlights();
+
+    expect(UrlFlightProvider.prototype.getFlights).toHaveBeenCalledTimes(0);
     expect(flights).toEqual([]);
   });
 });

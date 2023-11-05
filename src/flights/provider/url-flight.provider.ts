@@ -1,6 +1,6 @@
-import { Flight, FlightData } from 'src/model/flight.model';
+import { Flight, FlightData } from '../model/flight.model';
 import { FlightProviderInterface } from './flight.provider.interface';
-import { CacheClientInterface } from 'src/storage/cache.client.interface';
+import { CacheClientInterface } from '../../storage/cache.client.interface';
 import axios from 'axios';
 
 export class UrlFlightProvider implements FlightProviderInterface {

@@ -3,8 +3,6 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../src/config/configuration';
-import { AppController } from '../src/app.controller';
-import { FlightService } from '../src/service/flight.service';
 import { CacheClientFactory } from '../src/storage/cache.client.factory';
 import {
   DelayType,
@@ -12,10 +10,16 @@ import {
   IWireMockResponse,
   WireMock,
 } from 'wiremock-captain';
-import { flight1, flight2, flight3 } from '../src/test-helper/flight.mock';
-import { Flight } from '../src/model/flight.model';
+import { FlightsController } from '../src/flights/flights.controller';
+import { FlightService } from '../src/flights/service/flight.service';
+import {
+  flight1,
+  flight2,
+  flight3,
+} from '../src/flights/test-helper/flight.mock';
+import { Flight } from '../src/flights/model/flight.model';
 
-describe('AppController (e2e)', () => {
+describe('FlightsController (e2e)', () => {
   let app: INestApplication;
   const wiremockEndpoint = 'http://localhost:8080';
   const powerUsMock = new WireMock(wiremockEndpoint);
@@ -28,7 +32,7 @@ describe('AppController (e2e)', () => {
           load: [configuration],
         }),
       ],
-      controllers: [AppController],
+      controllers: [FlightsController],
       providers: [FlightService, CacheClientFactory],
     }).compile();
     app = moduleFixture.createNestApplication();
@@ -59,7 +63,7 @@ describe('AppController (e2e)', () => {
     await powerUsMock.register(request2, response2);
 
     return request(app.getHttpServer())
-      .get('/')
+      .get('/flights')
       .timeout(1000)
       .expect(200)
       .expect({ flights: [flight1, flight3, flight2] });
@@ -95,7 +99,7 @@ describe('AppController (e2e)', () => {
     await powerUsMock.register(request2, response2);
 
     return request(app.getHttpServer())
-      .get('/')
+      .get('/flights')
       .timeout(1000)
       .expect(200)
       .expect({ flights: [flight1, flight2, flight3] });
@@ -135,7 +139,7 @@ describe('AppController (e2e)', () => {
     });
 
     return request(app.getHttpServer())
-      .get('/')
+      .get('/flights')
       .timeout(1000)
       .expect(200)
       .expect({ flights: [flight2] });
@@ -165,7 +169,7 @@ describe('AppController (e2e)', () => {
     await powerUsMock.register(request2, response2);
 
     return request(app.getHttpServer())
-      .get('/')
+      .get('/flights')
       .timeout(1000)
       .expect(200)
       .expect({ flights: [flight2] });

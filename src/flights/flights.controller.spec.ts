@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
+import { FlightsController } from './flights.controller';
 import { FlightService } from './service/flight.service';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { flight1, flight2, flight3 } from './test-helper/flight.mock';
 
-describe('AppController', () => {
-  let appController: AppController;
+describe('FlightsController', () => {
+  let appController: FlightsController;
   let flightService: DeepMocked<FlightService>;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
+      controllers: [FlightsController],
       providers: [
         {
           provide: FlightService,
@@ -20,7 +20,7 @@ describe('AppController', () => {
     }).compile();
 
     flightService = app.get(FlightService);
-    appController = app.get<AppController>(AppController);
+    appController = app.get<FlightsController>(FlightsController);
   });
 
   describe('flights controller', () => {

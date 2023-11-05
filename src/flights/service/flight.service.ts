@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Flight } from '../model/flight.model';
 import { FlightProviderInterface } from '../provider/flight.provider.interface';
 import { ConfigService } from '@nestjs/config';
-import { UrlProviderConfig } from '../model/configuration.model';
-import { CacheClientFactory } from '../storage/cache.client.factory';
 import { UrlFlightProvider } from '../provider/url-flight.provider';
-import { CacheClientInterface } from '../storage/cache.client.interface';
+import { CacheClientFactory } from '../../storage/cache.client.factory';
+import { CacheClientInterface } from '../../storage/cache.client.interface';
+import { ProviderConfig, ProviderType } from '../model/provider-config.model';
 
 @Injectable()
 export class FlightService {
@@ -29,34 +29,21 @@ export class FlightService {
   }
 
   private initProviders() {
-    // Add here all your flight providers
-    const url1Config = this.configService.get<UrlProviderConfig>(
-      'providerConfigurations.powerUs1',
+    const configs = this.configService.get<ProviderConfig[]>(
+      'providerConfigurations',
+      [],
     );
-    if (url1Config) {
-      this.providers.push(
-        new UrlFlightProvider(
-          url1Config.url,
-          url1Config.timeout,
-          url1Config.cacheKey,
-          url1Config.cacheTime,
-        ),
-      );
-    }
-
-    const url2Config = this.configService.get<UrlProviderConfig>(
-      'providerConfigurations.powerUs2',
-    );
-    if (url2Config) {
-      this.providers.push(
-        new UrlFlightProvider(
-          url2Config.url,
-          url2Config.timeout,
-          url2Config.cacheKey,
-          url2Config.cacheTime,
-        ),
-      );
-    }
+    configs.forEach((c) => {
+      switch (c.type) {
+        case ProviderType.URL:
+          this.providers.push(
+            new UrlFlightProvider(c.url, c.timeout, c.cacheKey, c.cacheTime),
+          );
+          break;
+        default:
+          break;
+      }
+    });
   }
 
   private mergeFlightResponses(flightResponses: Flight[][]): Flight[] {

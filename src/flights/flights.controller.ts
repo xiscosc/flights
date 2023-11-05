@@ -2,8 +2,8 @@ import { Controller, Get } from '@nestjs/common';
 import { FlightService } from './service/flight.service';
 import { FlightData } from './model/flight.model';
 
-@Controller()
-export class AppController {
+@Controller('flights')
+export class FlightsController {
   constructor(private readonly flightService: FlightService) {}
 
   @Get()

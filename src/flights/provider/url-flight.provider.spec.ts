@@ -1,6 +1,6 @@
 import { UrlFlightProvider } from './url-flight.provider';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { CacheClientInterface } from '../storage/cache.client.interface';
+import { CacheClientInterface } from '../../storage/cache.client.interface';
 import axios from 'axios';
 import { flight1 } from '../test-helper/flight.mock';
 jest.mock('axios');
