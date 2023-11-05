@@ -49,6 +49,12 @@ npm run start
 
 Make a call to `GET http://localhost:3000/flights`
 
+
+### How to add more providers
+If there are new urls, add them to the env file and the `FlightService` will gather them automatically.
+For new kind of providers, a new class implementing the `FlightProviderInterface` has to bee created and added to the
+`FlightService`.
+
 ## Test
 
 ### How to test it

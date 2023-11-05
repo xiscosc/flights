@@ -35,6 +35,7 @@ export class FlightService {
     );
     configs.forEach((c) => {
       switch (c.type) {
+        // Add new types of providers here
         case ProviderType.URL:
           this.providers.push(
             new UrlFlightProvider(c.url, c.timeout, c.cacheKey, c.cacheTime),

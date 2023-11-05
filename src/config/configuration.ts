@@ -5,7 +5,7 @@ import {
 } from '../flights/model/provider-config.model';
 
 export default () => ({
-  providerConfigurations: createUrlProviderConfigurations(),
+  providerConfigurations: createProviderConfigurations(),
   cacheType: getFromEnv('CACHE_TYPE'),
 });
 
@@ -16,9 +16,23 @@ function getFromEnv(key: string): string {
   throw Error(`Undefined env ${key}`);
 }
 
-function createUrlProviderConfigurations(): ProviderConfig[] {
+function createProviderConfigurations(): ProviderConfig[] {
   const timeout = +getFromEnv('DEFAULT_PROVIDER_TIMEOUT');
   const cacheTime = +getFromEnv('DEFAULT_PROVIDER_CACHE_TIME');
+
+  // Add other provider configs here
+  const urlProviderConfigs = createUrlProviderConfigurations(
+    timeout,
+    cacheTime,
+  );
+
+  return [...urlProviderConfigs];
+}
+
+function createUrlProviderConfigurations(
+  timeout: number,
+  cacheTime: number,
+): ProviderConfig[] {
   const urls = getFromEnv('FLIGHT_PROVIDER_URLS').split(',');
   return urls.map((u) => ({
     url: u,
