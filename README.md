@@ -1,73 +1,71 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Flights API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+### Project Structure
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+#### Flights Module
+- **FlightsController**: Controller with the required endpoint for retrieving the flights: ```/flights```
 
-## Description
+- **FlightService**: Creates all flight providers from configuration and process all responses from them, merging the 
+results and removing duplicates.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **FlightProvider**: Gets flights from a source and caches it for next requests if it is possible. For this exercise,
+only a _UrlFlightProvider_ has been implemented. 
+  - The _UrlFlightProvider_ class gets the data from a URL and caches it, if the remote endpoint fails
+or times out it returns an empty response. When a response is successful, it caches the results. Next
+time, if cache is available it does not pull from the url and returns the content of the cache directly.
 
-## Installation
+#### Storage
+A _CacheClientFactory_ class has been implemented, depending on the configuration it will return a client for
+the selected storage. For this exercise only a Redis client and a None client have been implemented. The none client
+basically does nothing but allows other methods that rely on having a cache client to be used if a cache storage
+is not available.
 
-```bash
-$ npm install
+The _CacheClient_ has been design to handle errors gracefully. If the cache server becomes unavailable, it will try
+to reconnect the next time it's needed.
+
+#### Environment
+A `.env` file has been created at the root of the project. NestJS automatically reads it and it has been mapped to
+a configuration file in `src/config/configuration.ts`.
+
+The `.env` file contains the URLS of the providers in a comma separated list, default values for timeouts and caching,
+and the type of cache to use (`REDIS|NONE`).
+
+The default value of the timeout for the urls has been set to `900ms` since the service has always to answer in `1s`
+and a margin of `100ms` has been left for processing the results of the flights urls.
+
+## Run
+### How to run it
+Before running it, the cache server has to be up and running:
+```
+docker run -p 6379:6379 -it redis/redis-stack-server:latest
 ```
 
-## Running the app
+If you don't want to use the cache, you can change the `.env` file property to `CACHE_TYPE=NONE`
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+Start the server:
 ```
+npm run start
+```
+
+Make a call to `GET http://localhost:3000/flights`
 
 ## Test
 
-```bash
-# unit tests
-$ npm run test
+### How to test it
+#### Unit tests
+Those are unit tests that for the FlightService, FlightProviders, and FlightController
 
-# e2e tests
-$ npm run test:e2e
+```npm run test```
 
-# test coverage
-$ npm run test:cov
+#### E2E tests
+Those integration tests, call the service directly. A wiremock server has been configured to
+control the remote urls and to be able to cause errors and timeouts. Before running the test,
+a wiremock server has to be started.
+
+Tests check complete functionality of the endpoint including cases when the urls timeout, return errors or
+duplicated flights. They also check that the endpoint always returns in less than `1s`.
+
 ```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+docker run -itd --rm --name wiremock-container -p 8080:8080 wiremock/wiremock:2.32.0 --record-mappings --verbose
+npm run test:e2e
+```
